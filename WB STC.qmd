@@ -5,16 +5,40 @@ title: "Ana Grisanti - WB STC R Assessment"
 ## Basic Stats
 
 ```{r}
+rm(list = ls())
+
+#Loading WDI dataset
 tag      <- "202311081903"
 base_url <- "https://github.com/randrescastaneda/pub_data/raw/"
 data_url <- paste0(base_url, tag, "/data/Rtest1/")
 
-
-wdi <-
-  readr::read_rds(paste0(data_url, "wdi_in1.Rds"))
+wdi <- readr::read_rds(paste0(data_url, "wdi_in1.Rds"))
 ```
 
 1.  Summary Statistics of GDP per capita by region
+
+```{r}
+#Installing package to create a summary of GDP variable
+install.packages('doBy')
+library('doBy')
+
+#Generating new dataset with summary statistics of GDP per capita, by region and year
+library(dplyr)
+rep_gdp_df<- wdi %>% drop_na(gdp)
+rep_gdp_df<-rep_gdp_df%>%
+   group_by(region, date) %>%
+   summarise(N=n(),
+             Mean= weighted.mean(gdp,pop),
+             SD= sd(gdp),
+             Min= min(gdp),
+             Max= max(gdp))
+
+#Checking similarity to original data
+org_gdp_df <- readr::read_rds(paste0(data_url, "wdi_summ_out.Rds"))
+waldo::compare(rep_gdp_df, org_gdp_df)
+```
+
+2.  Aggregate stats
 
 ```{r}
 
