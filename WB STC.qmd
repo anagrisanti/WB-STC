@@ -277,3 +277,10 @@ waldo::compare(org4_df, rep4_df)
 #FINAL OUTPUT -- I got different results likely because I did not use the weights. I was not sure how to incorporate this part into the calculations. With more time I might have been able to do so.
 write.csv(rep4_df, "./output/ReplicateDF_Q4.csv", row.names=FALSE)
 ```
+
+4.  Lorenz curve
+
+```{r}
+
+```
+
