@@ -35,8 +35,8 @@ rep1_df<-rep1_df%>%
              Min= min(gdp),
              Max= max(gdp))
 
-#FINAL REPLICATED DATAFRAME
-View(rep1_df)
+#FINAL OUTPUT
+write.csv(rep1_df, "./output/ReplicateDF_Q1.csv", row.names=FALSE)
 
 #Checking similarity to original data
 org1_df <- readr::read_rds(paste0(data_url, "wdi_summ_out.Rds"))
@@ -44,6 +44,10 @@ waldo::compare(rep_gdp_df, org_gdp_df)
 ```
 
 2.  Aggregate stats
+
+#FINAL REPLICATED DATAFRAME
+
+View(rep2_df)
 
 ```{r}
 #Checking data to replicate 
@@ -95,8 +99,8 @@ merged <- merge(rep2_df_gdp, rep2_df_lifeex, by=c("estimate","region", "date", "
 rep2_df <- merge(merged, rep2_df_povintl, by=c("estimate","region", "date", "pop"))
 rm(merged, rep2_df_, rep2_df_gdp, rep2_df_lifeex, rep2_df_povintl)
 
-#FINAL REPLICATED DATAFRAME
-View(rep2_df)
+#FINAL OUTPUT
+write.csv(rep2_df, "./output/ReplicateDF_Q2.csv", row.names=FALSE)
 
 #Checking for similarity with original datagrame
 waldo::compare(rep2_df, org2_df)
@@ -132,6 +136,9 @@ rep3_df <- rep3_df %>%
 
 #Checking for similarity with original datagrame
 waldo::compare(rep3_df, org3_df)
+
+#FINAL OUTPUT
+write.csv(rep3_df, "./output/ReplicateDF_Q3.csv", row.names=FALSE)
 ```
 
 4.  Poverty measures
@@ -141,4 +148,83 @@ waldo::compare(rep3_df, org3_df)
 l_svy <-readr::read_rds(paste0(data_url, "svy_sim_in1.Rds"))
 
 org4_df <- readr::read_rds(paste0(data_url, "dt_pov_out.Rds"))
+
+#Calculating headcount vectors for incomes under $2.15, $3.65 and $6.85
+headcount215 <- vector(mode="numeric")
+number <- 1:10
+for(i in number) {
+    result <- sum(print(l_svy[[i]][1]<2.15))/100000
+    headcount215 <- append(headcount215, result)
+}
+
+headcount365 <- vector(mode="numeric")
+number <- 1:10
+for(i in number) {
+    result <- sum(print(l_svy[[i]][1]<3.65))/100000
+    headcount365 <- append(headcount365, result)
+}
+
+headcount685 <- vector(mode="numeric")
+number <- 1:10
+for(i in number) {
+    result <- sum(print(l_svy[[i]][1]<6.85))/100000
+    headcount685 <- append(headcount685, result)
+}
+
+#Creating a dataframe for headcount calculations
+year <- 2001:2010
+headcount_df <- data.frame(year, headcount215, headcount365, headcount685) 
+
+#Calculating poverty gap
+povertygap215 <- vector(mode="numeric")
+number <- 1:10
+for(i in number) {
+  avrginc <- sum(l_svy[[i]][1]*print(l_svy[[i]][1]<2.15))/sum(print(l_svy[[i]][1]<2.15))
+  povertyratio <- (2.15 - avrginc)/2.15
+  headcount <- sum(print(l_svy[[i]][1]<2.15))/100000
+  povertygap <- headcount*povertyratio
+  povertygap215 <- append(povertygap215, povertygap)
+}
+
+povertygap365 <- vector(mode="numeric")
+number <- 1:10
+for(i in number) {
+  avrginc <- sum(l_svy[[i]][1]*print(l_svy[[i]][1]<2.15))/sum(print(l_svy[[i]][1]<3.65))
+  povertyratio <- (3.65 - avrginc)/3.65
+  headcount <- sum(print(l_svy[[i]][1]<3.65))/100000
+  povertygap <- headcount*povertyratio
+  povertygap365 <- append(povertygap365, povertygap)
+}
+
+povertygap685 <- vector(mode="numeric")
+number <- 1:10
+for(i in number) {
+  avrginc <- sum(l_svy[[i]][1]*print(l_svy[[i]][1]<6.85))/sum(print(l_svy[[i]][1]<6.85))
+  povertyratio <- (6.85 - avrginc)/6.85
+  headcount <- sum(print(l_svy[[i]][1]<6.85))/100000
+  povertygap <- headcount*povertyratio
+  povertygap685 <- append(povertygap685, povertygap)
+}
+
+#Creating a dataframe for povertygap calculations
+povertygap_df <- data.frame(year, povertygap215, povertygap365, povertygap685) 
+
+#Datasets from wide to long
+headcount_df <- headcount_df %>%
+  gather(pov_line, headcount, headcount215:headcount685, factor_key=TRUE)
+headcount_df$pov_line <- gsub(".*215.*", "2.15", headcount_df$pov_line)
+headcount_df$pov_line <- gsub(".*365.*", "3.65", headcount_df$pov_line)
+headcount_df$pov_line <- gsub(".*685.*", "6.85", headcount_df$pov_line)
+
+povertygap_df <- povertygap_df %>%
+  gather(pov_line, povertygap, povertygap215:povertygap685, factor_key=TRUE)
+povertygap_df$pov_line <- gsub(".*215.*", "2.15", povertygap_df$pov_line)
+povertygap_df$pov_line <- gsub(".*365.*", "3.65", povertygap_df$pov_line)
+povertygap_df$pov_line <- gsub(".*685.*", "6.85", povertygap_df$pov_line)
+
+#Merging long datasets
+rep4_df <- merge(headcount_df, povertygap_df, by=c("year","pov_line"))
+
+#FINAL OUTPUT -- I got different results likely because I did not use the weights. I was not sure how to incorporate this part into the calculations. With more time I might have been able to do so.
+write.csv(rep4_df, "./output/ReplicateDF_Q4.csv", row.names=FALSE)
 ```
