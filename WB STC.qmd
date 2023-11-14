@@ -15,11 +15,14 @@ data_url <- paste0(base_url, tag, "/data/Rtest1/")
 wdi <- readr::read_rds(paste0(data_url, "wdi_in1.Rds"))
 
 #Installing necessary packages and calling the libraries
-install.packages('doBy')
+#install.packages('doBy')
+install.packages('pracma')
+library('pracma')
 library('doBy')
 library(collapse)
 library(dplyr)
 library(tidyverse)
+library(tidyr)
 ```
 
 1.  Summary Statistics of GDP per capita by region
@@ -278,8 +281,66 @@ waldo::compare(org4_df, rep4_df)
 write.csv(rep4_df, "./output/ReplicateDF_Q4.csv", row.names=FALSE)
 ```
 
-4.  Lorenz curve
+5.  Lorenz curve
 
+```{r}
+#Keeping only elements in the environment that are final output or serving a purpose for future exercises
+rm(list = setdiff(ls(), c('org1_df', 'org2_df', 'org3_df', 'org4_df', 'rep1_df', 'rep2_df', 'rep3_df', 'rep4_df', 'l_svy')))
+
+#Loading example data to replicate in exercise 5
+org5_df<- readr::read_rds(paste0(data_url, "dt_lorenz_out.Rds"))
+
+library(dplyr)
+
+#Creating a function to yield Lorenz curve variables
+calculate_lorenz_curves <- function(survey_list) {
+  # Initialize an empty dataframe to store the results
+  rep5_df <- data.frame()
+
+  # Iterate through each survey in the list
+  number <- 1:10
+  for(i in number) {
+    survey <- l_svy[[i]]
+    year <- 2000 + i
+
+    # Sort the survey data by income in ascending order
+    survey <- survey %>% arrange(income)
+
+    # Calculate the cumulative population and cumulative welfare
+      survey <- survey %>%
+      mutate(cum_population = cumsum(weight)/max(cumsum(weight)),
+             cum_welfare = cumsum(weight * income)/max(cumsum(weight*income)),
+             year = year) %>% #Generating a variable for the year
+      rename(welfare = income) #Changing the income name variable to the 
+     
+    #Keeping only 101 observations for each year, based on 101 marks of percentiles
+     survey$bin <- round(survey$cum_population, digits = 2) ##Creating bins based on cum_population
+     survey$diff <- survey$bin - survey$cum_population ## Identifying where cum_pop is closest to bins
+     survey$diff <- abs(survey$diff)
+     summary <- survey %>% 
+       group_by(bin) %>% 
+       slice_min(order_by = diff) ##Keeping only observations identified that are closest to bins
+     summary$bin <- summary$bin*100
+     
+    #Keeping only necessary variables
+    summary = summary[c("welfare", "cum_welfare", "cum_population", "bin", "year")] 
+    
+    #binding the summary dataframe for each year into one dataset
+    rep5_df <- bind_rows(rep5_df, summary)
+    }
+  
+    return(rep5_df)
+}
+
+#Applying the function to the l_svy list of dataframes
+rep5_df <- calculate_lorenz_curves(l_svy)
+
+#FINAL OUTPUT
+write.csv(rep5_df, "./output/ReplicateDF_Q5.csv", row.names=FALSE)
+
+```
+
+6. Gini coefficient
 ```{r}
 
 ```
