@@ -1,8 +1,11 @@
 ---
-title: "Ana Grisanti - WB STC R Assessment"
+title: "WBSTC"
+format: html
 ---
 
+
 ## Basic Stats
+
 
 ```{r}
 rm(list = ls())
@@ -25,7 +28,9 @@ library(tidyverse)
 library(tidyr)
 ```
 
+
 1.  Summary Statistics of GDP per capita by region
+
 
 ```{r}
 #Generating new dataset with summary statistics of GDP per capita, by region and year
@@ -46,7 +51,9 @@ org1_df <- readr::read_rds(paste0(data_url, "wdi_summ_out.Rds"))
 waldo::compare(rep1_df, org1_df)
 ```
 
+
 2.  Aggregate stats
+
 
 ```{r}
 #Checking data to replicate 
@@ -106,7 +113,9 @@ waldo::compare(rep2_df, org2_df)
 
 ```
 
+
 3.  Find outliers
+
 
 ```{r}
 org3_df<-readr::read_rds(paste0(data_url, "wdi_outliers_out.Rds"))
@@ -140,7 +149,9 @@ waldo::compare(rep3_df, org3_df)
 write.csv(rep3_df, "./output/ReplicateDF_Q3.csv", row.names=FALSE)
 ```
 
+
 4.  Poverty measures
+
 
 ```{r}
 #Loading the data
@@ -279,7 +290,9 @@ plot4 <- ggplot(rep4_df, aes(x = year, y = headcount, group = pov_line, color = 
 ggsave('./output/plot_4.jpg')
 ```
 
+
 5.  Lorenz curve
+
 
 ```{r}
 #Keeping only elements in the environment that are final output or serving a purpose for future exercises
@@ -340,7 +353,10 @@ ggsave('./output/plot_5.jpg')
 
 ```
 
-6. Gini coefficient
+
+6.  Gini coefficient
+
+
 ```{r}
 org6_df<- readr::read_rds(paste0(data_url, "dt_gini_out.Rds"))
 
