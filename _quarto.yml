@@ -1,5 +1,7 @@
 project:
+  type: website
   title: "WB STC"
+  output-dir: docs
 
 editor: visual
 
