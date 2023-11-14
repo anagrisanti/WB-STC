@@ -16,7 +16,7 @@ wdi <- readr::read_rds(paste0(data_url, "wdi_in1.Rds"))
 
 #Installing necessary packages and calling the libraries
 #install.packages('doBy')
-install.packages('pracma')
+#install.packages('pracma')
 library('pracma')
 library('doBy')
 library(collapse)
@@ -43,14 +43,10 @@ write.csv(rep1_df, "./output/ReplicateDF_Q1.csv", row.names=FALSE)
 
 #Checking similarity to original data
 org1_df <- readr::read_rds(paste0(data_url, "wdi_summ_out.Rds"))
-waldo::compare(rep_gdp_df, org_gdp_df)
+waldo::compare(rep1_df, org1_df)
 ```
 
 2.  Aggregate stats
-
-#FINAL REPLICATED DATAFRAME
-
-View(rep2_df)
 
 ```{r}
 #Checking data to replicate 
@@ -275,22 +271,22 @@ povertysev_df$pov_line <- gsub(".*685.*", "6.85", povertysev_df$pov_line)
 rep4_df <- merge(headcount_df, povertygap_df, by=c("year","pov_line"))
 rep4_df <- merge(rep4_df, povertysev_df, by=c("year","pov_line"))
 
-waldo::compare(org4_df, rep4_df)
-
 #FINAL OUTPUT
 write.csv(rep4_df, "./output/ReplicateDF_Q4.csv", row.names=FALSE)
+
+#Generating the plot
+plot4 <- ggplot(rep4_df, aes(x = year, y = headcount, group = pov_line, color = as.factor(pov_line))) + geom_line()
+ggsave('./output/plot_4.jpg')
 ```
 
 5.  Lorenz curve
 
 ```{r}
 #Keeping only elements in the environment that are final output or serving a purpose for future exercises
-rm(list = setdiff(ls(), c('org1_df', 'org2_df', 'org3_df', 'org4_df', 'rep1_df', 'rep2_df', 'rep3_df', 'rep4_df', 'l_svy')))
+rm(list = setdiff(ls(), c('org1_df', 'org2_df', 'org3_df', 'org4_df', 'rep1_df', 'rep2_df', 'rep3_df', 'rep4_df', 'plot4', 'l_svy', 'tag', 'base_url', 'data_url')))
 
 #Loading example data to replicate in exercise 5
 org5_df<- readr::read_rds(paste0(data_url, "dt_lorenz_out.Rds"))
-
-library(dplyr)
 
 #Creating a function to yield Lorenz curve variables
 calculate_lorenz_curves <- function(survey_list) {
@@ -338,10 +334,56 @@ rep5_df <- calculate_lorenz_curves(l_svy)
 #FINAL OUTPUT
 write.csv(rep5_df, "./output/ReplicateDF_Q5.csv", row.names=FALSE)
 
+#Generating and saving the plot
+plot5 <- ggplot(rep5_df, aes(x = cum_population, y = cum_welfare, group = year, color = as.factor(year))) + geom_line()
+ggsave('./output/plot_5.jpg')
+
 ```
 
 6. Gini coefficient
 ```{r}
+org6_df<- readr::read_rds(paste0(data_url, "dt_gini_out.Rds"))
+
+#Creating the function to calcualte gini coefficient
+calculate_gini_coef <- function(df) {
+  # Initialize an empty dataframe to store the results
+  rep6_df <- data.frame()
+
+  # Iterate through each survey in the list
+  number <- 2001:2010
+  for(i in number) {
+    yearlorenz <- subset(df, year == i) ##Keeping a subset of the data for one year
+    year = i
+    total_pop <- max(yearlorenz$cum_population)
+    
+    # Calculate the area under the Lorenz curve using the trapezoidal rule
+    yearlorenz <- yearlorenz %>%
+      arrange(cum_population) %>%
+      mutate(area = (cum_welfare + lag(cum_welfare, default = 0)) * 
+           (cum_population - lag(cum_population, default = 0)) / 2)
+    
+    # Calculate Gini coefficient
+    gini <- 1 - 2 * sum(yearlorenz$area) / total_pop
+    
+    #Creating a line for each year with the gini
+    result <- data.frame(year, gini)
+    
+    #binding the result for each year into the final dataframe
+    rep6_df <- bind_rows(rep6_df, result)
+  }
+  return(rep6_df)
+}
+
+#Applying the function to the output in the previous exercise
+rep6_df <- calculate_gini_coef(rep5_df)
+
+#FINAL OUTPUT
+write.csv(rep6_df, "./output/ReplicateDF_Q6.csv", row.names=FALSE)
+
+#Generating and saving the plot
+plot6 <- ggplot(rep6_df, aes(x = year, y = gini)) + 
+       geom_line()
+ggsave('./output/plot_6.jpg')
 
 ```
 
